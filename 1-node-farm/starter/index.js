@@ -54,7 +54,7 @@ const replaceTemplate = (temp, product) => {
     output = output.replace(/{%NOT_ORGANIC%}/g, "not-organic");
   return output;
 };
-
+// for reading html templates
 const tempOverview = fs.readFileSync(
   `${__dirname}/templates/template-overview.html`,
   "utf-8"
