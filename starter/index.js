@@ -3,6 +3,8 @@ const http = require("http");
 //const { dirname } = require("path/posix");
 const url = require("url");
 
+const replaceTemplate = require("./modules/replaceTemplate"); //the . represents current loc of module in require
+
 /////////////////////////////////
 //FILES
 
@@ -39,21 +41,6 @@ const url = require("url");
 //SERVER
 //A simple API for json reading
 
-const replaceTemplate = (temp, product) => {
-  //function to replace html placeholder
-  let output = temp.replace(/{%PRODUCTNAME%}/g, product.productName); //g flag is used to indicate regex global
-  output = output.replace(/{%IMAGE%}/g, product.image);
-  output = output.replace(/{%PRICE%}/g, product.price);
-  output = output.replace(/{%FROM%}/g, product.from);
-  output = output.replace(/{%NUTRIENTS%}/g, product.nutrients);
-  output = output.replace(/{%QUANTITY%}/g, product.quantity);
-  output = output.replace(/{%DESCRIPTION%}/g, product.description);
-  output = output.replace(/{%ID%}/g, product.id);
-
-  if (!product.organic)
-    output = output.replace(/{%NOT_ORGANIC%}/g, "not-organic");
-  return output;
-};
 // for reading html templates
 const tempOverview = fs.readFileSync(
   `${__dirname}/templates/template-overview.html`,
@@ -71,14 +58,17 @@ const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8"); //top 
 const dataObj = JSON.parse(data); //parse takes json string and turns into JS obj
 
 const server = http.createServer((req, res) => {
-  //gets executed each time there is a new req, hence asynch
-  console.log(req.url);
+  const { query, pathname } = url.parse(req.url, true);
 
-  const pathName = req.url;
+  //gets executed each time there is a new req, hence asynch
+  //Consoles for geting the url and parsing to know about query and search
+  //console.log(req.url);
+  //console.log(url.parse(req.url, true));
+  //const pathname = req.url;
 
   //Overview page
 
-  if (pathName === "/" || pathName === "/overview") {
+  if (pathname === "/" || pathname === "/overview") {
     res.writeHead(200, { "Content-type": "text/html" });
 
     const cardsHtml = dataObj
@@ -89,11 +79,15 @@ const server = http.createServer((req, res) => {
     res.end(output);
 
     // Product page
-  } else if (pathName === "/product") {
-    res.end("This is the PRODUCT!");
+  } else if (pathname === "/product") {
+    res.writeHead(200, { "Content-type": "text/html" });
+    const product = dataObj[query.id]; //retreiving element based on a query string
+    const output = replaceTemplate(tempProduct, product);
+    //console.log(query);
+    res.end(output);
 
     //API
-  } else if (pathName === "/api") {
+  } else if (pathname === "/api") {
     //Simple API to request data from application
     res.writeHead(200, { "Content-type": "application/json" });
     res.end(data);
